@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Entry, EntryFormData, EntryType } from "@/types";
+import type { CharacterRelation, Entry, EntryFormData, EntryType, RelationDirection, RelationStatus, RelationType } from "@/types";
 import { filterEntries, getAllTags } from "@/lib/entry-filters";
 import { useStore } from "@/hooks/use-store";
 import { TopBar } from "@/components/TopBar";
@@ -10,6 +10,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { EntryList } from "@/components/EntryList";
 import { EntryDetail } from "@/components/EntryDetail";
 import { EntryEditor } from "@/components/EntryEditor";
+import { CharacterRelationDialog } from "@/components/CharacterRelationDialog";
 
 type PanelMode = "view" | "create" | "edit";
 
@@ -30,6 +31,10 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
     addEntry,
     editEntry,
     removeEntry,
+    addRelation,
+    editRelation,
+    removeRelation,
+    getRelationsByCharacter,
   } = useStore();
 
   const [activeType, setActiveType] = useState<EntryType>("character");
@@ -37,6 +42,10 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
   const [panelMode, setPanelMode] = useState<PanelMode>("view");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [relationDialog, setRelationDialog] = useState<{
+    open: boolean;
+    editingRelation: CharacterRelation | null;
+  }>({ open: false, editingRelation: null });
 
   const project = getProject(projectId);
   const typeEntries = useMemo(
@@ -62,6 +71,19 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
   const relatedEntries = useMemo(
     () => (selectedEntry ? getRelatedEntries(selectedEntry) : []),
     [selectedEntry, getRelatedEntries],
+  );
+
+  const characterRelations = useMemo(
+    () =>
+      selectedEntry && selectedEntry.type === "character"
+        ? getRelationsByCharacter(projectId, selectedEntry.id)
+        : [],
+    [selectedEntry, projectId, getRelationsByCharacter],
+  );
+
+  const characterEntries = useMemo(
+    () => data.entries.filter((e) => e.type === "character" && e.projectId === projectId),
+    [data.entries, projectId],
   );
 
   const handleTypeChange = useCallback((type: EntryType) => {
@@ -122,6 +144,63 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
     setPanelMode("view");
   }, []);
 
+  const handleAddRelation = useCallback(() => {
+    setRelationDialog({ open: true, editingRelation: null });
+  }, []);
+
+  const handleEditRelation = useCallback((relationId: string) => {
+    const relation = data.characterRelations.find((r) => r.id === relationId) ?? null;
+    setRelationDialog({ open: true, editingRelation: relation });
+  }, [data.characterRelations]);
+
+  const handleDeleteRelation = useCallback(
+    (relationId: string) => {
+      if (!window.confirm("确定删除此关系吗？")) return;
+      removeRelation(relationId);
+    },
+    [removeRelation],
+  );
+
+  const handleSaveRelation = useCallback(
+    (
+      input: {
+        projectId: string;
+        fromCharacterId: string;
+        toCharacterId: string;
+        relationType: RelationType;
+        customLabel: string;
+        direction: RelationDirection;
+        status: RelationStatus;
+        note: string;
+      },
+      editRelationId?: string,
+    ) => {
+      if (editRelationId) {
+        editRelation(editRelationId, {
+          relationType: input.relationType,
+          customLabel: input.customLabel,
+          direction: input.direction,
+          status: input.status,
+          note: input.note,
+        });
+      } else {
+        addRelation(input);
+      }
+    },
+    [addRelation, editRelation],
+  );
+
+  const handleNavigateToCharacter = useCallback(
+    (entryId: string) => {
+      setActiveType("character");
+      setSelectedEntryId(entryId);
+      setPanelMode("view");
+      setActiveTag(null);
+      setSearchQuery("");
+    },
+    [],
+  );
+
   if (!hydrated) {
     return (
       <div className="flex min-h-screen items-center justify-center text-muted-foreground">
@@ -178,6 +257,12 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
             onSelectRelated={handleSelectRelated}
             onSelectEntry={handleSelectRelated}
             onTagClick={setActiveTag}
+            characterRelations={characterRelations}
+            allCharacterEntries={characterEntries}
+            onAddRelation={handleAddRelation}
+            onEditRelation={handleEditRelation}
+            onDeleteRelation={handleDeleteRelation}
+            onNavigateToCharacter={handleNavigateToCharacter}
           />
         ) : (
           <aside className="flex h-full w-[460px] shrink-0 flex-col border-l border-border/80 bg-card/30">
@@ -193,6 +278,17 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
           </aside>
         )}
       </div>
+
+      <CharacterRelationDialog
+        open={relationDialog.open}
+        onOpenChange={(open) => setRelationDialog({ open, editingRelation: open ? relationDialog.editingRelation : null })}
+        editingRelation={relationDialog.editingRelation}
+        currentCharacterId={selectedEntry?.id ?? ""}
+        projectId={projectId}
+        characterEntries={characterEntries}
+        existingRelations={data.characterRelations.filter((r) => r.projectId === projectId)}
+        onSave={handleSaveRelation}
+      />
     </div>
   );
 }

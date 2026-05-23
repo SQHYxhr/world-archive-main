@@ -29,6 +29,56 @@ export interface CharacterProfile {
   quote: string;
 }
 
+/** 角色关系类型预设 */
+export const RELATION_TYPES = [
+  "friend",
+  "family",
+  "lover",
+  "enemy",
+  "mentor",
+  "student",
+  "ally",
+  "rival",
+  "colleague",
+  "superior",
+  "subordinate",
+  "unknown",
+] as const;
+
+export type RelationType = (typeof RELATION_TYPES)[number];
+
+export const RELATION_TYPE_LABELS: Record<RelationType, string> = {
+  friend: "朋友",
+  family: "家人",
+  lover: "恋人",
+  enemy: "敌人",
+  mentor: "导师",
+  student: "学生",
+  ally: "盟友",
+  rival: "对手",
+  colleague: "同事",
+  superior: "上司",
+  subordinate: "下属",
+  unknown: "未知",
+};
+
+export type RelationDirection = "directed" | "mutual";
+export type RelationStatus = "current" | "past" | "ambiguous";
+
+export interface CharacterRelation {
+  id: string;
+  projectId: string;
+  fromCharacterId: string;
+  toCharacterId: string;
+  relationType: RelationType;
+  customLabel: string;
+  direction: RelationDirection;
+  status: RelationStatus;
+  note: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -60,6 +110,7 @@ export interface Entry {
 export interface AppData {
   projects: Project[];
   entries: Entry[];
+  characterRelations: CharacterRelation[];
 }
 
 export const ENTRY_TYPES: EntryType[] = [

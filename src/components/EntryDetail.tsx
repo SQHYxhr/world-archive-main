@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { BookMarked, Edit3, Pin, Star } from "lucide-react";
-import type { Entry } from "@/types";
+import type { CharacterRelation, Entry } from "@/types";
 import { ENTRY_TYPE_LABELS } from "@/types";
 import { getImageAlt } from "@/lib/images";
 import { formatDate } from "@/lib/utils";
@@ -26,6 +26,12 @@ interface EntryDetailProps {
   onSelectRelated: (entry: Entry) => void;
   onSelectEntry: (entry: Entry) => void;
   onTagClick?: (tag: string) => void;
+  characterRelations: CharacterRelation[];
+  allCharacterEntries: Entry[];
+  onAddRelation: () => void;
+  onEditRelation: (relationId: string) => void;
+  onDeleteRelation: (relationId: string) => void;
+  onNavigateToCharacter: (entryId: string) => void;
 }
 
 export function EntryDetail({
@@ -36,6 +42,12 @@ export function EntryDetail({
   onSelectRelated,
   onSelectEntry,
   onTagClick,
+  characterRelations,
+  allCharacterEntries,
+  onAddRelation,
+  onEditRelation,
+  onDeleteRelation,
+  onNavigateToCharacter,
 }: EntryDetailProps) {
   const [lightbox, setLightbox] = useState<{ src: string; alt: string } | null>(null);
 
@@ -67,6 +79,12 @@ export function EntryDetail({
         onSelectRelated={onSelectRelated}
         onSelectEntry={onSelectEntry}
         onTagClick={onTagClick}
+        characterRelations={characterRelations}
+        allCharacterEntries={allCharacterEntries}
+        onAddRelation={onAddRelation}
+        onEditRelation={onEditRelation}
+        onDeleteRelation={onDeleteRelation}
+        onNavigateToCharacter={onNavigateToCharacter}
       />
     );
   }

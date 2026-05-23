@@ -1,4 +1,5 @@
-import type { AppData, Entry } from "@/types";
+import type { AppData, CharacterRelation, Entry } from "@/types";
+import { RELATION_TYPES, type RelationType } from "@/types";
 import { ENTRY_IMAGE_FIELDS } from "@/types";
 import { normalizeCharacterProfile } from "@/lib/character-profile";
 
@@ -34,9 +35,29 @@ export function normalizeEntry(entry: Partial<Entry> & Pick<Entry, "id" | "proje
   return base;
 }
 
+export function normalizeCharacterRelation(
+  raw: Partial<CharacterRelation> & Pick<CharacterRelation, "id" | "projectId">,
+): CharacterRelation {
+  return {
+    id: raw.id,
+    projectId: raw.projectId,
+    fromCharacterId: typeof raw.fromCharacterId === "string" ? raw.fromCharacterId : "",
+    toCharacterId: typeof raw.toCharacterId === "string" ? raw.toCharacterId : "",
+    relationType: RELATION_TYPES.includes(raw.relationType as RelationType)
+      ? (raw.relationType as RelationType)
+      : "unknown",
+    customLabel: typeof raw.customLabel === "string" ? raw.customLabel.trim() : "",
+    direction: raw.direction === "mutual" ? "mutual" : "directed",
+    status: raw.status === "past" || raw.status === "ambiguous" ? raw.status : "current",
+    note: typeof raw.note === "string" ? raw.note : "",
+    createdAt: raw.createdAt ?? new Date().toISOString(),
+    updatedAt: raw.updatedAt ?? new Date().toISOString(),
+  };
+}
+
 export function migrateData(raw: unknown): AppData {
   if (!raw || typeof raw !== "object") {
-    return { projects: [], entries: [] };
+    return { projects: [], entries: [], characterRelations: [] };
   }
 
   const data = raw as Partial<AppData>;
@@ -44,6 +65,13 @@ export function migrateData(raw: unknown): AppData {
     projects: Array.isArray(data.projects) ? data.projects : [],
     entries: Array.isArray(data.entries)
       ? data.entries.map((e) => normalizeEntry(e as Partial<Entry> & Pick<Entry, "id" | "projectId" | "type">))
+      : [],
+    characterRelations: Array.isArray(data.characterRelations)
+      ? data.characterRelations.map((r) =>
+          normalizeCharacterRelation(
+            r as Partial<CharacterRelation> & Pick<CharacterRelation, "id" | "projectId">,
+          ),
+        )
       : [],
   };
 }

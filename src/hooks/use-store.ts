@@ -1,16 +1,20 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { AppData, Entry, EntryFormData, EntryType, Project, ProjectFormData } from "@/types";
+import type { AppData, CharacterRelation, Entry, EntryFormData, EntryType, Project, ProjectFormData } from "@/types";
 import { seedIfEmpty } from "@/lib/demo-data";
 import {
+  createCharacterRelation,
   createEmptyData,
   createEntry,
   createProject,
+  deleteCharacterRelation,
   deleteEntry,
   deleteProject,
+  getCharacterRelations,
   loadData,
   saveData,
+  updateCharacterRelation,
   updateEntry,
   updateProject,
 } from "@/lib/storage";
@@ -117,6 +121,40 @@ export function useStore() {
     [data.entries],
   );
 
+  const addRelation = useCallback(
+    (
+      input: Parameters<typeof createCharacterRelation>[1],
+    ): CharacterRelation => {
+      const { data: next, relation } = createCharacterRelation(data, input);
+      persist(next);
+      return relation;
+    },
+    [data, persist],
+  );
+
+  const editRelation = useCallback(
+    (
+      relationId: string,
+      input: Parameters<typeof updateCharacterRelation>[2],
+    ) => {
+      persist(updateCharacterRelation(data, relationId, input));
+    },
+    [data, persist],
+  );
+
+  const removeRelation = useCallback(
+    (relationId: string) => {
+      persist(deleteCharacterRelation(data, relationId));
+    },
+    [data, persist],
+  );
+
+  const getRelationsByCharacter = useCallback(
+    (projectId: string, characterId: string) =>
+      getCharacterRelations(data, projectId, characterId),
+    [data],
+  );
+
   return {
     data,
     hydrated,
@@ -133,5 +171,9 @@ export function useStore() {
     getProjectEntries,
     getEntryById,
     getRelatedEntries,
+    addRelation,
+    editRelation,
+    removeRelation,
+    getRelationsByCharacter,
   };
 }

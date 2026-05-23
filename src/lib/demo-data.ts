@@ -30,6 +30,7 @@ export function createDemoData(): AppData {
   const gallery2 = DEMO_IMAGES.characterGallery2;
 
   return {
+    characterRelations: [],
     projects: [
       {
         id: DEMO_PROJECT_ID,

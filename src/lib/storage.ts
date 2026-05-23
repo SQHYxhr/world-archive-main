@@ -1,12 +1,12 @@
-import type { AppData, Entry, EntryType, Project } from "@/types";
+import type { AppData, CharacterRelation, Entry, EntryType, Project } from "@/types";
 import { normalizeTags } from "@/lib/entry-filters";
-import { migrateData, loadLegacyData, STORAGE_KEY, LEGACY_STORAGE_KEY, normalizeEntry } from "@/lib/migrate";
+import { migrateData, loadLegacyData, STORAGE_KEY, LEGACY_STORAGE_KEY, normalizeEntry, normalizeCharacterRelation } from "@/lib/migrate";
 import { generateId } from "@/lib/utils";
 
 export { STORAGE_KEY } from "@/lib/migrate";
 
 export function createEmptyData(): AppData {
-  return { projects: [], entries: [] };
+  return { projects: [], entries: [], characterRelations: [] };
 }
 
 export function loadData(): AppData {
@@ -118,6 +118,7 @@ export function deleteProject(data: AppData, projectId: string): AppData {
   return {
     projects: data.projects.filter((p) => p.id !== projectId),
     entries: data.entries.filter((e) => e.projectId !== projectId),
+    characterRelations: data.characterRelations.filter((r) => r.projectId !== projectId),
   };
 }
 
@@ -162,6 +163,7 @@ export function updateEntry(data: AppData, entryId: string, input: EntryInput): 
   });
 
   return {
+    ...data,
     entries,
     projects: data.projects.map((p) =>
       p.id === projectId ? { ...p, updatedAt: now } : p,
@@ -181,6 +183,9 @@ export function deleteEntry(data: AppData, entryId: string): AppData {
           ? { ...e, relatedEntryIds: e.relatedEntryIds.filter((id) => id !== entryId) }
           : e,
       ),
+    characterRelations: data.characterRelations.filter(
+      (r) => r.fromCharacterId !== entryId && r.toCharacterId !== entryId,
+    ),
     projects: data.projects.map((p) =>
       p.id === entry?.projectId ? { ...p, updatedAt: now } : p,
     ),
@@ -194,4 +199,77 @@ export function getProjectEntries(data: AppData, projectId: string, type?: Entry
       if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
       return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
     });
+}
+
+type RelationInput = Pick<
+  CharacterRelation,
+  "projectId" | "fromCharacterId" | "toCharacterId" | "relationType" | "customLabel" | "direction" | "status" | "note"
+>;
+
+export function createCharacterRelation(
+  data: AppData,
+  input: RelationInput,
+): { data: AppData; relation: CharacterRelation } {
+  const now = new Date().toISOString();
+  const relation = normalizeCharacterRelation({
+    id: generateId(),
+    projectId: input.projectId,
+    fromCharacterId: input.fromCharacterId,
+    toCharacterId: input.toCharacterId,
+    relationType: input.relationType,
+    customLabel: input.customLabel.trim(),
+    direction: input.direction,
+    status: input.status,
+    note: input.note,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  return {
+    data: {
+      ...data,
+      characterRelations: [relation, ...data.characterRelations],
+    },
+    relation,
+  };
+}
+
+export function updateCharacterRelation(
+  data: AppData,
+  relationId: string,
+  input: Partial<Pick<CharacterRelation, "relationType" | "customLabel" | "direction" | "status" | "note">>,
+): AppData {
+  const now = new Date().toISOString();
+  return {
+    ...data,
+    characterRelations: data.characterRelations.map((r) =>
+      r.id === relationId
+        ? normalizeCharacterRelation({
+            ...r,
+            ...input,
+            customLabel: input.customLabel !== undefined ? input.customLabel.trim() : r.customLabel,
+            updatedAt: now,
+          })
+        : r,
+    ),
+  };
+}
+
+export function deleteCharacterRelation(data: AppData, relationId: string): AppData {
+  return {
+    ...data,
+    characterRelations: data.characterRelations.filter((r) => r.id !== relationId),
+  };
+}
+
+export function getCharacterRelations(
+  data: AppData,
+  projectId: string,
+  characterId: string,
+): CharacterRelation[] {
+  return data.characterRelations.filter(
+    (r) =>
+      r.projectId === projectId &&
+      (r.fromCharacterId === characterId || r.toCharacterId === characterId),
+  );
 }

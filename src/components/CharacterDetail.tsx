@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { Edit3, Pin, Quote, Star } from "lucide-react";
-import type { CharacterProfile, Entry } from "@/types";
+import type { CharacterProfile, CharacterRelation, Entry } from "@/types";
 import { ENTRY_TYPE_LABELS } from "@/types";
 import { getCharacterDisplayName } from "@/lib/character-profile";
 import { getImageAlt } from "@/lib/images";
@@ -14,6 +14,7 @@ import { EntryContentView } from "@/components/EntryContentView";
 import { GalleryGrid } from "@/components/GalleryGrid";
 import { ImageLightbox } from "@/components/ImageLightbox";
 import { RelatedEntries } from "@/components/RelatedEntries";
+import { CharacterRelationList } from "@/components/CharacterRelationList";
 
 interface CharacterDetailProps {
   entry: Entry;
@@ -24,6 +25,12 @@ interface CharacterDetailProps {
   onSelectRelated: (entry: Entry) => void;
   onSelectEntry: (entry: Entry) => void;
   onTagClick?: (tag: string) => void;
+  characterRelations: CharacterRelation[];
+  allCharacterEntries: Entry[];
+  onAddRelation: () => void;
+  onEditRelation: (relationId: string) => void;
+  onDeleteRelation: (relationId: string) => void;
+  onNavigateToCharacter: (entryId: string) => void;
 }
 
 function ProfileBlock({ title, text }: { title: string; text: string }) {
@@ -76,6 +83,12 @@ export function CharacterDetail({
   onSelectRelated,
   onSelectEntry,
   onTagClick,
+  characterRelations,
+  allCharacterEntries,
+  onAddRelation,
+  onEditRelation,
+  onDeleteRelation,
+  onNavigateToCharacter,
 }: CharacterDetailProps) {
   const [lightbox, setLightbox] = useState<{ src: string; alt: string } | null>(null);
   const displayName = getCharacterDisplayName(entry);
@@ -272,6 +285,16 @@ export function CharacterDetail({
                 <EntryContentView content={entry.content} onImageClick={openImage} />
               </section>
             ) : null}
+
+            <CharacterRelationList
+              relations={characterRelations}
+              currentCharacterId={entry.id}
+              allCharacterEntries={allCharacterEntries}
+              onAdd={onAddRelation}
+              onEdit={onEditRelation}
+              onDelete={onDeleteRelation}
+              onNavigate={onNavigateToCharacter}
+            />
 
             <RelatedEntries entries={relatedEntries} onSelect={onSelectRelated} />
 
