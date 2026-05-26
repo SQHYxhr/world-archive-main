@@ -1,4 +1,4 @@
-import type { LocationProfile } from "@/types";
+import type { Entry, LocationProfile } from "@/types";
 import { LOCATION_CATEGORIES, LOCATION_STATUSES } from "@/types";
 
 export function createEmptyLocationProfile(): LocationProfile {
@@ -43,4 +43,27 @@ export function normalizeLocationProfile(raw: unknown): LocationProfile {
     access: typeof obj.access === "string" ? obj.access : "",
     creatorNotes: typeof obj.creatorNotes === "string" ? obj.creatorNotes : "",
   };
+}
+
+export function wouldCreateLocationCycle(
+  entries: Entry[],
+  currentEntryId: string,
+  parentLocationId: string,
+): boolean {
+  if (!parentLocationId) return false;
+  if (parentLocationId === currentEntryId) return true;
+
+  const visited = new Set<string>();
+  let cursor: string | undefined = parentLocationId;
+
+  while (cursor) {
+    if (cursor === currentEntryId) return true;
+    if (visited.has(cursor)) return true;
+    visited.add(cursor);
+
+    const parent = entries.find((e) => e.id === cursor);
+    cursor = parent?.locationProfile?.parentLocationId || undefined;
+  }
+
+  return false;
 }
