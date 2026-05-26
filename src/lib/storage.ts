@@ -1,4 +1,5 @@
 import type { AppData, CharacterRelation, Entry, EntryType, Project } from "@/types";
+import { normalizeLocationProfile } from "@/lib/location-profile";
 import { normalizeTags } from "@/lib/entry-filters";
 import { migrateData, loadLegacyData, STORAGE_KEY, LEGACY_STORAGE_KEY, normalizeEntry, normalizeCharacterRelation } from "@/lib/migrate";
 import { generateId } from "@/lib/utils";
@@ -52,6 +53,7 @@ type EntryInput = Pick<
   | "tags"
   | "relatedEntryIds"
   | "characterProfile"
+  | "locationProfile"
 >;
 
 function buildEntryFields(input: EntryInput) {
@@ -76,10 +78,17 @@ function buildEntryFields(input: EntryInput) {
     };
   }
 
+  if (input.type === "location" && input.locationProfile) {
+    return {
+      ...fields,
+      locationProfile: normalizeLocationProfile(input.locationProfile),
+    };
+  }
+
   return fields;
 }
 
-function clearCharacterReferences(
+function clearStructuredReferences(
   data: AppData,
   entryId: string,
   oldType: EntryType | undefined,
@@ -91,6 +100,9 @@ function clearCharacterReferences(
       if (e.type === "character" && e.characterProfile?.locationId === entryId) {
         return { ...e, characterProfile: { ...e.characterProfile, locationId: "" } };
       }
+      if (e.type === "location" && e.locationProfile?.parentLocationId === entryId) {
+        return { ...e, locationProfile: { ...e.locationProfile, parentLocationId: "" } };
+      }
       return e;
     });
   }
@@ -99,6 +111,9 @@ function clearCharacterReferences(
     entries = entries.map((e) => {
       if (e.type === "character" && e.characterProfile?.factionId === entryId) {
         return { ...e, characterProfile: { ...e.characterProfile, factionId: "" } };
+      }
+      if (e.type === "location" && e.locationProfile?.governingFactionId === entryId) {
+        return { ...e, locationProfile: { ...e.locationProfile, governingFactionId: "" } };
       }
       return e;
     });
@@ -210,7 +225,7 @@ export function updateEntry(data: AppData, entryId: string, input: EntryInput): 
   let result: AppData = { ...data, entries };
 
   if (oldType && oldType !== input.type) {
-    result = clearCharacterReferences(result, entryId, oldType);
+    result = clearStructuredReferences(result, entryId, oldType);
   }
 
   return {
@@ -225,7 +240,7 @@ export function deleteEntry(data: AppData, entryId: string): AppData {
   const entry = data.entries.find((e) => e.id === entryId);
   const now = new Date().toISOString();
 
-  const cleaned = clearCharacterReferences(data, entryId, entry?.type);
+  const cleaned = clearStructuredReferences(data, entryId, entry?.type);
 
   return {
     entries: cleaned.entries

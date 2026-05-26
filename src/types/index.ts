@@ -79,6 +79,66 @@ export interface CharacterRelation {
   updatedAt: string;
 }
 
+export const LOCATION_CATEGORIES = [
+  "city",
+  "academy",
+  "building",
+  "country",
+  "region",
+  "ruin",
+  "realm",
+  "natural",
+  "other",
+] as const;
+
+export type LocationCategory = "" | (typeof LOCATION_CATEGORIES)[number];
+
+export const LOCATION_CATEGORY_LABELS: Record<LocationCategory, string> = {
+  "": "未选择",
+  city: "城市",
+  academy: "学院",
+  building: "建筑",
+  country: "国家",
+  region: "区域",
+  ruin: "遗迹",
+  realm: "秘境",
+  natural: "自然区域",
+  other: "其他",
+};
+
+export const LOCATION_STATUSES = [
+  "active",
+  "abandoned",
+  "destroyed",
+  "sealed",
+  "lost",
+  "unknown",
+] as const;
+
+export type LocationStatus = "" | (typeof LOCATION_STATUSES)[number];
+
+export const LOCATION_STATUS_LABELS: Record<LocationStatus, string> = {
+  "": "未选择",
+  active: "正常",
+  abandoned: "废弃",
+  destroyed: "毁灭",
+  sealed: "封锁 / 封印",
+  lost: "失落",
+  unknown: "未知",
+};
+
+export interface LocationProfile {
+  locationCategory: LocationCategory;
+  status: LocationStatus;
+  parentLocationId: string;
+  governingFactionId: string;
+  environment: string;
+  landmarks: string;
+  history: string;
+  access: string;
+  creatorNotes: string;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -105,6 +165,8 @@ export interface Entry {
   relatedEntryIds: string[];
   /** 角色结构化档案；仅 type === "character" 时有效 */
   characterProfile?: CharacterProfile;
+  /** 地点结构化档案；仅 type === "location" 时有效 */
+  locationProfile?: LocationProfile;
 }
 
 export interface AppData {
@@ -160,6 +222,7 @@ export type EntryFormData = Pick<
   | "tags"
   | "relatedEntryIds"
   | "characterProfile"
+  | "locationProfile"
 >;
 
 export type ProjectFormData = Pick<Project, "name" | "description">;
