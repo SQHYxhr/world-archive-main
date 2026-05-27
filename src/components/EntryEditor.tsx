@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Pin, Star, Trash2 } from "lucide-react";
 import type { Entry, EntryFormData, EntryType } from "@/types";
 import { createEmptyCharacterProfile } from "@/lib/character-profile";
+import { createEmptyLocationProfile, wouldCreateLocationCycle } from "@/lib/location-profile";
 import { ENTRY_IMAGE_FIELDS, ENTRY_TYPE_LABELS, ENTRY_TYPES } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,7 @@ import { RichTextEditor } from "@/components/RichTextEditor";
 import { TagInput } from "@/components/TagInput";
 import { RelatedEntryPicker } from "@/components/RelatedEntryPicker";
 import { CharacterEditor } from "@/components/CharacterEditor";
+import { LocationEditor } from "@/components/LocationEditor";
 import { Separator } from "@/components/ui/separator";
 
 interface EntryEditorProps {
@@ -48,6 +50,7 @@ const emptyForm = (type: EntryType): EntryFormData => ({
   galleryImages: [...ENTRY_IMAGE_FIELDS.galleryImages],
   imageAltMap: { ...ENTRY_IMAGE_FIELDS.imageAltMap },
   ...(type === "character" ? { characterProfile: createEmptyCharacterProfile() } : {}),
+  ...(type === "location" ? { locationProfile: createEmptyLocationProfile() } : {}),
 });
 
 export function EntryEditor({
@@ -83,6 +86,12 @@ export function EntryEditor({
               ? { ...entry.characterProfile, aliases: [...entry.characterProfile.aliases] }
               : createEmptyCharacterProfile()
             : undefined,
+        locationProfile:
+          entry.type === "location"
+            ? entry.locationProfile
+              ? { ...entry.locationProfile }
+              : createEmptyLocationProfile()
+            : undefined,
       });
     } else {
       setForm(emptyForm(defaultType));
@@ -90,28 +99,59 @@ export function EntryEditor({
   }, [entry, mode, defaultType]);
 
   const handleTypeChange = (newType: EntryType) => {
-    if (newType === "character") {
-      setForm((prev) => ({
-        ...prev,
-        type: newType,
-        characterProfile: prev.characterProfile ?? createEmptyCharacterProfile(),
-      }));
-    } else {
-      setForm((prev) => {
-        const next = { ...prev, type: newType };
-        delete next.characterProfile;
-        return next;
-      });
-    }
+    setForm((prev) => ({
+      ...prev,
+      type: newType,
+      ...(newType === "character" && !prev.characterProfile
+        ? { characterProfile: createEmptyCharacterProfile() }
+        : {}),
+      ...(newType === "location" && !prev.locationProfile
+        ? { locationProfile: createEmptyLocationProfile() }
+        : {}),
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title.trim()) return;
+
+    if (entry && mode === "edit" && entry.type !== form.type) {
+      if (
+        !window.confirm(
+          "更改条目类型将移除当前类型的专属档案内容，并可能删除相关结构化关系。此操作保存后无法自动恢复，是否继续？",
+        )
+      ) {
+        return;
+      }
+    }
+
+    if (
+      form.type === "location" &&
+      mode === "edit" &&
+      entry &&
+      form.locationProfile?.parentLocationId
+    ) {
+      if (
+        wouldCreateLocationCycle(
+          projectEntries,
+          entry.id,
+          form.locationProfile.parentLocationId,
+        )
+      ) {
+        window.alert("无法设置该上级地点，因为这会形成循环层级关系。");
+        return;
+      }
+    }
+
     if (form.type === "character") {
       onSave({
         ...form,
         characterProfile: form.characterProfile ?? createEmptyCharacterProfile(),
+      });
+    } else if (form.type === "location") {
+      onSave({
+        ...form,
+        locationProfile: form.locationProfile ?? createEmptyLocationProfile(),
       });
     } else {
       onSave({
@@ -138,6 +178,8 @@ export function EntryEditor({
   };
 
   const isCharacter = form.type === "character";
+  const isLocation = form.type === "location";
+  const isStructured = isCharacter || isLocation;
 
   return (
     <>
@@ -149,13 +191,19 @@ export function EntryEditor({
                 {mode === "create"
                   ? isCharacter
                     ? "新建角色档案"
-                    : "新建条目"
+                    : isLocation
+                      ? "新建地点档案"
+                      : "新建条目"
                   : isCharacter
                     ? "编辑角色档案"
-                    : "编辑条目"}
+                    : isLocation
+                      ? "编辑地点档案"
+                      : "编辑条目"}
               </h2>
               {isCharacter ? (
                 <p className="text-xs text-muted-foreground">结构化 OC / 人物设定</p>
+              ) : isLocation ? (
+                <p className="text-xs text-muted-foreground">结构化地点设定</p>
               ) : null}
             </div>
             <div className="flex gap-2">
@@ -192,6 +240,13 @@ export function EntryEditor({
 
           {isCharacter ? (
             <CharacterEditor
+              form={form}
+              setForm={setForm}
+              entry={entry}
+              projectEntries={projectEntries}
+            />
+          ) : isLocation ? (
+            <LocationEditor
               form={form}
               setForm={setForm}
               entry={entry}
@@ -290,7 +345,7 @@ export function EntryEditor({
         </form>
       </ScrollArea>
 
-      {!isCharacter ? (
+      {!isStructured ? (
         <Dialog open={!!inlineInsert} onOpenChange={(open) => !open && setInlineInsert(null)}>
           <DialogContent>
             <DialogHeader>

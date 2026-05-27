@@ -2,6 +2,7 @@ import type { AppData, CharacterRelation, Entry } from "@/types";
 import { RELATION_TYPES, type RelationType } from "@/types";
 import { ENTRY_IMAGE_FIELDS } from "@/types";
 import { normalizeCharacterProfile } from "@/lib/character-profile";
+import { normalizeLocationProfile } from "@/lib/location-profile";
 
 export const STORAGE_KEY = "world-archive-v2";
 export const LEGACY_STORAGE_KEY = "world-archive-v1";
@@ -29,6 +30,13 @@ export function normalizeEntry(entry: Partial<Entry> & Pick<Entry, "id" | "proje
     return {
       ...base,
       characterProfile: normalizeCharacterProfile(entry.characterProfile),
+    };
+  }
+
+  if (entry.type === "location" && entry.locationProfile) {
+    return {
+      ...base,
+      locationProfile: normalizeLocationProfile(entry.locationProfile),
     };
   }
 

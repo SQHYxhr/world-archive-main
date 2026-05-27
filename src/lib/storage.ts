@@ -1,4 +1,5 @@
 import type { AppData, CharacterRelation, Entry, EntryType, Project } from "@/types";
+import { normalizeLocationProfile } from "@/lib/location-profile";
 import { normalizeTags } from "@/lib/entry-filters";
 import { migrateData, loadLegacyData, STORAGE_KEY, LEGACY_STORAGE_KEY, normalizeEntry, normalizeCharacterRelation } from "@/lib/migrate";
 import { generateId } from "@/lib/utils";
@@ -52,6 +53,7 @@ type EntryInput = Pick<
   | "tags"
   | "relatedEntryIds"
   | "characterProfile"
+  | "locationProfile"
 >;
 
 function buildEntryFields(input: EntryInput) {
@@ -76,7 +78,63 @@ function buildEntryFields(input: EntryInput) {
     };
   }
 
+  if (input.type === "location" && input.locationProfile) {
+    return {
+      ...fields,
+      locationProfile: normalizeLocationProfile(input.locationProfile),
+    };
+  }
+
   return fields;
+}
+
+function clearStructuredReferences(
+  data: AppData,
+  entryId: string,
+  oldType: EntryType | undefined,
+): AppData {
+  let { entries, characterRelations } = data;
+
+  if (oldType === "location") {
+    entries = entries.map((e) => {
+      if (e.type === "character" && e.characterProfile?.locationId === entryId) {
+        return { ...e, characterProfile: { ...e.characterProfile, locationId: "" } };
+      }
+      if (e.type === "location" && e.locationProfile?.parentLocationId === entryId) {
+        return { ...e, locationProfile: { ...e.locationProfile, parentLocationId: "" } };
+      }
+      return e;
+    });
+  }
+
+  if (oldType === "faction") {
+    entries = entries.map((e) => {
+      if (e.type === "character" && e.characterProfile?.factionId === entryId) {
+        return { ...e, characterProfile: { ...e.characterProfile, factionId: "" } };
+      }
+      if (e.type === "location" && e.locationProfile?.governingFactionId === entryId) {
+        return { ...e, locationProfile: { ...e.locationProfile, governingFactionId: "" } };
+      }
+      return e;
+    });
+  }
+
+  if (oldType === "species") {
+    entries = entries.map((e) => {
+      if (e.type === "character" && e.characterProfile?.speciesId === entryId) {
+        return { ...e, characterProfile: { ...e.characterProfile, speciesId: "" } };
+      }
+      return e;
+    });
+  }
+
+  if (oldType === "character") {
+    characterRelations = characterRelations.filter(
+      (r) => r.fromCharacterId !== entryId && r.toCharacterId !== entryId,
+    );
+  }
+
+  return { ...data, entries, characterRelations };
 }
 
 export function createProject(
@@ -151,10 +209,12 @@ export function createEntry(
 export function updateEntry(data: AppData, entryId: string, input: EntryInput): AppData {
   const now = new Date().toISOString();
   let projectId = "";
+  let oldType: EntryType | undefined;
 
   const entries = data.entries.map((e) => {
     if (e.id !== entryId) return e;
     projectId = e.projectId;
+    oldType = e.type;
     return normalizeEntry({
       ...e,
       ...buildEntryFields(input),
@@ -162,9 +222,14 @@ export function updateEntry(data: AppData, entryId: string, input: EntryInput): 
     });
   });
 
+  let result: AppData = { ...data, entries };
+
+  if (oldType && oldType !== input.type) {
+    result = clearStructuredReferences(result, entryId, oldType);
+  }
+
   return {
-    ...data,
-    entries,
+    ...result,
     projects: data.projects.map((p) =>
       p.id === projectId ? { ...p, updatedAt: now } : p,
     ),
@@ -175,15 +240,17 @@ export function deleteEntry(data: AppData, entryId: string): AppData {
   const entry = data.entries.find((e) => e.id === entryId);
   const now = new Date().toISOString();
 
+  const cleaned = clearStructuredReferences(data, entryId, entry?.type);
+
   return {
-    entries: data.entries
+    entries: cleaned.entries
       .filter((e) => e.id !== entryId)
       .map((e) =>
         e.relatedEntryIds.includes(entryId)
           ? { ...e, relatedEntryIds: e.relatedEntryIds.filter((id) => id !== entryId) }
           : e,
       ),
-    characterRelations: data.characterRelations.filter(
+    characterRelations: cleaned.characterRelations.filter(
       (r) => r.fromCharacterId !== entryId && r.toCharacterId !== entryId,
     ),
     projects: data.projects.map((p) =>

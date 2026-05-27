@@ -9,6 +9,7 @@ interface EntryRefSelectProps {
   value: string;
   entries: Entry[];
   filterType: EntryType;
+  excludeId?: string;
   onChange: (entryId: string) => void;
 }
 
@@ -17,10 +18,11 @@ export function EntryRefSelect({
   value,
   entries,
   filterType,
+  excludeId,
   onChange,
 }: EntryRefSelectProps) {
   const options = entries
-    .filter((e) => e.type === filterType)
+    .filter((e) => e.type === filterType && e.id !== excludeId)
     .sort((a, b) => a.title.localeCompare(b.title, "zh-CN"));
 
   return (
