@@ -14,11 +14,12 @@ import { EmptyState } from "@/components/EmptyState";
 
 export default function HomePage() {
   const router = useRouter();
-  const { hydrated, projects, data, addProject } = useStore();
+  const { hydrated, projects, data, addProject, replaceData } = useStore();
   const fileRef = useRef<HTMLInputElement>(null);
   const [exported, setExported] = useState(false);
   const [exportError, setExportError] = useState("");
   const [checkResult, setCheckResult] = useState<BackupValidationResult | null>(null);
+  const [importStatus, setImportStatus] = useState<"idle" | "success" | "error">("idle");
 
   const handleCreate = (input: { name: string; description: string }) => {
     const project = addProject(input);
@@ -39,6 +40,7 @@ export default function HomePage() {
 
   const handleFileCheck = useCallback(() => {
     setCheckResult(null);
+    setImportStatus("idle");
     fileRef.current?.click();
   }, []);
 
@@ -60,6 +62,31 @@ export default function HomePage() {
     },
     [],
   );
+
+  const handleImport = useCallback(() => {
+    if (!checkResult?.ok) return;
+
+    const warningNote =
+      checkResult.warnings.length > 0
+        ? `\n\n该备份存在 ${checkResult.warnings.length} 条警告，导入后可能存在引用不一致。`
+        : "";
+
+    if (
+      !window.confirm(
+        `导入备份会覆盖当前浏览器中的所有世界、条目和角色关系。此操作不可撤销，建议先导出当前数据备份。是否继续？${warningNote}`,
+      )
+    ) {
+      return;
+    }
+
+    try {
+      replaceData(checkResult.payload.data);
+      setImportStatus("success");
+    } catch (e) {
+      console.error(e);
+      setImportStatus("error");
+    }
+  }, [checkResult, replaceData]);
 
   if (!hydrated) {
     return (
@@ -127,9 +154,11 @@ export default function HomePage() {
                       </span>
                     ) : null}
                   </p>
-                  <p className="text-muted-foreground">
-                    仅完成校验，尚未导入或覆盖当前数据。
-                  </p>
+                  {importStatus === "idle" ? (
+                    <p className="text-muted-foreground">
+                      仅完成校验，尚未导入或覆盖当前数据。
+                    </p>
+                  ) : null}
                   {checkResult.warnings.length > 0 ? (
                     <ul className="mt-1 space-y-0.5 text-muted-foreground">
                       {checkResult.warnings.slice(0, 5).map((w, i) => (
@@ -140,6 +169,24 @@ export default function HomePage() {
                       ) : null}
                     </ul>
                   ) : null}
+                  {importStatus === "idle" ? (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="mt-2 gap-1.5"
+                      onClick={handleImport}
+                    >
+                      导入此备份
+                    </Button>
+                  ) : importStatus === "success" ? (
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      导入成功，当前浏览器数据已替换为备份内容。
+                    </p>
+                  ) : (
+                    <p className="mt-2 text-xs text-destructive">
+                      导入失败，请稍后重试。
+                    </p>
+                  )}
                 </div>
               ) : (
                 <div className="max-w-md text-xs">
