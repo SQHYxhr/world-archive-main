@@ -35,6 +35,11 @@ export function useStore() {
     saveData(next);
   }, []);
 
+  const replaceData = useCallback((nextData: AppData) => {
+    saveData(nextData);
+    setData(nextData);
+  }, []);
+
   const addProject = useCallback(
     (input: ProjectFormData): Project => {
       const { data: next, project } = createProject(data, input);
@@ -159,6 +164,7 @@ export function useStore() {
     data,
     hydrated,
     projects: data.projects,
+    replaceData,
     addProject,
     editProject,
     removeProject,
