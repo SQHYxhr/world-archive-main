@@ -181,6 +181,22 @@ export function createDemoData(): AppData {
         isPinned: false,
         tags: ["组织", "政治"],
         relatedEntryIds: [DEMO_ENTRY_IDS.location, DEMO_ENTRY_IDS.event],
+        factionProfile: {
+          factionCategory: "government",
+          status: "active",
+          parentFactionId: "",
+          headquartersLocationId: DEMO_ENTRY_IDS.location,
+          ideology:
+            "主张「秩序先于自由」，认为未经约束的魔法力量终将反噬文明。守序会的信条是：一切超常之力都应受到观测、评估与规制，而非交由个人意志随意使用。",
+          structure:
+            "守序会采用三阶议事制：最高决策层为「星律议会」，负责制定核心政策；中层为各浮空岛派驻的「观察官」，负责监督与报告；基层为分散在学院、法庭与边境的「执律人」，执行具体事务。",
+          influence:
+            "守序会的影响力横跨多个浮空岛，尤其在立法与教育领域。他们通过「魔法安全顾问」身份介入各国议会，同时与星落学院保持密切合作，实质上参与制定符文学的研究边界与星落观测准则。",
+          history:
+            "三百年前「大魔法失控事件」导致数座浮空岛半毁。幸存者中的七位星象学者与战法师共同组建了守序会，誓言不再让魔法脱离人类的理性掌控。此后守序会逐渐从应急组织演变为跨国规制机构，但也因其铁腕政策引发争议。",
+          creatorNotes:
+            "守序会的定位是灰色势力，而非纯粹反派。他们的担忧有历史依据，手段也有温和与强硬之分。在主线中，守序会内部对「星落异象」的态度并不统一，这可以成为林晚星与之产生复杂互动的切入点。",
+        },
       },
       {
         id: DEMO_ENTRY_IDS.lore,
