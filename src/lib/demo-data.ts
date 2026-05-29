@@ -231,6 +231,27 @@ export function createDemoData(): AppData {
         isPinned: false,
         tags: ["道具", "符文学"],
         relatedEntryIds: [DEMO_ENTRY_IDS.character, DEMO_ENTRY_IDS.lore],
+        itemProfile: {
+          itemCategory: "accessory",
+          status: "intact",
+          ownerCharacterId: DEMO_ENTRY_IDS.character,
+          currentLocationId: "",
+          creatorFactionId: "",
+          origin:
+            "林晚星七岁那年星落异象之夜，于苍岚浮空岛边境的浅溪中拾得此护符。护符半埋于河床星砂之中，符文在星光下微微泛光，仿佛一直在等待被找到。",
+          appearance:
+            "护符约拇指大小，呈不规则椭圆形，通体半透明，内里仿佛封存着极细微的星尘。表面刻有半枚残缺符文，符纹走向无法辨认完整的笔画，但在星落期间会自行浮现第二层暗纹。",
+          function:
+            "佩戴者能在星落期间短暂「听见」附近魔力的流动方向，如同耳边多了一层感知维度。护符本身不主动增幅魔力，只作为感知的延伸。激活时发出极轻的嗡鸣，仿佛某种古老共鸣。",
+          materials:
+            "材质经学院多次检测仍未能确定，与已知矿物、合金均不一致。初步推测与星落坠落碎片高度相关，但尚无直接证据。护符表面温度恒定，不受外界环境影响。",
+          history:
+            "护符的残缺符文与《苍岚纪年》中记载的「星落符文」有一定相似度，但无法确认年代。曾有学者推测它属于更早的星落周期产物，因残缺而未被完整收录。目前护符的历史仍是一个开放的谜题。",
+          limitations:
+            "连续使用超过三次会导致佩戴者短暂失聪，持续时间随使用次数递增。初次约一炷香后恢复，连续五次以上可能持续数日。学院医疗科将此现象称为「残余共鸣效应」，建议每次星落周期内不超过两次使用。",
+          creatorNotes:
+            "残响护符是第一卷中林晚星的核心道具，也是她感知能力的来源之一。护符的来历和残缺符文的含义可以在第二卷中作为重要线索展开。建议保持神秘感，不要过早解释全部设定。",
+        },
       },
       {
         id: DEMO_ENTRY_IDS.event,
