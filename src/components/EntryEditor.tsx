@@ -26,6 +26,7 @@ import { TagInput } from "@/components/TagInput";
 import { RelatedEntryPicker } from "@/components/RelatedEntryPicker";
 import { CharacterEditor } from "@/components/CharacterEditor";
 import { LocationEditor } from "@/components/LocationEditor";
+import { FactionEditor } from "@/components/FactionEditor";
 import { Separator } from "@/components/ui/separator";
 
 interface EntryEditorProps {
@@ -213,7 +214,8 @@ export function EntryEditor({
 
   const isCharacter = form.type === "character";
   const isLocation = form.type === "location";
-  const isStructured = isCharacter || isLocation;
+  const isFaction = form.type === "faction";
+  const isStructured = isCharacter || isLocation || isFaction;
 
   return (
     <>
@@ -227,17 +229,23 @@ export function EntryEditor({
                     ? "新建角色档案"
                     : isLocation
                       ? "新建地点档案"
-                      : "新建条目"
+                      : isFaction
+                        ? "新建组织档案"
+                        : "新建条目"
                   : isCharacter
                     ? "编辑角色档案"
                     : isLocation
                       ? "编辑地点档案"
-                      : "编辑条目"}
+                      : isFaction
+                        ? "编辑组织档案"
+                        : "编辑条目"}
               </h2>
               {isCharacter ? (
                 <p className="text-xs text-muted-foreground">结构化 OC / 人物设定</p>
               ) : isLocation ? (
                 <p className="text-xs text-muted-foreground">结构化地点设定</p>
+              ) : isFaction ? (
+                <p className="text-xs text-muted-foreground">结构化组织 / 势力设定</p>
               ) : null}
             </div>
             <div className="flex gap-2">
@@ -281,6 +289,13 @@ export function EntryEditor({
             />
           ) : isLocation ? (
             <LocationEditor
+              form={form}
+              setForm={setForm}
+              entry={entry}
+              projectEntries={projectEntries}
+            />
+          ) : isFaction ? (
+            <FactionEditor
               form={form}
               setForm={setForm}
               entry={entry}
