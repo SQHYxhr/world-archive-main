@@ -203,6 +203,71 @@ export interface FactionProfile {
   creatorNotes: string;
 }
 
+// ── 物品 / 道具结构化档案 ──────────────────────────────────────
+
+export const ITEM_CATEGORIES = [
+  "weapon",
+  "armor",
+  "accessory",
+  "consumable",
+  "tool",
+  "artifact",
+  "document",
+  "material",
+  "other",
+] as const;
+
+export type ItemCategory = "" | (typeof ITEM_CATEGORIES)[number];
+
+export const ITEM_CATEGORY_LABELS: Record<ItemCategory, string> = {
+  "": "未选择",
+  weapon: "武器",
+  armor: "防具",
+  accessory: "饰品 / 护符",
+  consumable: "消耗品",
+  tool: "工具",
+  artifact: "遗物 / 神器",
+  document: "文献 / 卷轴",
+  material: "材料",
+  other: "其他",
+};
+
+export const ITEM_STATUSES = [
+  "intact",
+  "damaged",
+  "lost",
+  "destroyed",
+  "sealed",
+  "unknown",
+] as const;
+
+export type ItemStatus = "" | (typeof ITEM_STATUSES)[number];
+
+export const ITEM_STATUS_LABELS: Record<ItemStatus, string> = {
+  "": "未选择",
+  intact: "完好",
+  damaged: "受损",
+  lost: "遗失",
+  destroyed: "毁坏",
+  sealed: "封印 / 封存",
+  unknown: "未知",
+};
+
+export interface ItemProfile {
+  itemCategory: ItemCategory;
+  status: ItemStatus;
+  ownerCharacterId: string;
+  currentLocationId: string;
+  creatorFactionId: string;
+  origin: string;
+  appearance: string;
+  function: string;
+  materials: string;
+  history: string;
+  limitations: string;
+  creatorNotes: string;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -233,6 +298,8 @@ export interface Entry {
   locationProfile?: LocationProfile;
   /** 组织 / 势力结构化档案；仅 type === "faction" 时有效 */
   factionProfile?: FactionProfile;
+  /** 物品 / 道具结构化档案；仅 type === "item" 时有效 */
+  itemProfile?: ItemProfile;
 }
 
 export interface AppData {
@@ -290,6 +357,7 @@ export type EntryFormData = Pick<
   | "characterProfile"
   | "locationProfile"
   | "factionProfile"
+  | "itemProfile"
 >;
 
 export type ProjectFormData = Pick<Project, "name" | "description">;
