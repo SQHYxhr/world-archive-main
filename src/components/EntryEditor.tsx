@@ -5,6 +5,7 @@ import { Pin, Star, Trash2 } from "lucide-react";
 import type { Entry, EntryFormData, EntryType } from "@/types";
 import { createEmptyCharacterProfile } from "@/lib/character-profile";
 import { createEmptyLocationProfile, wouldCreateLocationCycle } from "@/lib/location-profile";
+import { createEmptyFactionProfile, wouldCreateFactionCycle } from "@/lib/faction-profile";
 import { ENTRY_IMAGE_FIELDS, ENTRY_TYPE_LABELS, ENTRY_TYPES } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +52,7 @@ const emptyForm = (type: EntryType): EntryFormData => ({
   imageAltMap: { ...ENTRY_IMAGE_FIELDS.imageAltMap },
   ...(type === "character" ? { characterProfile: createEmptyCharacterProfile() } : {}),
   ...(type === "location" ? { locationProfile: createEmptyLocationProfile() } : {}),
+  ...(type === "faction" ? { factionProfile: createEmptyFactionProfile() } : {}),
 });
 
 export function EntryEditor({
@@ -92,6 +94,12 @@ export function EntryEditor({
               ? { ...entry.locationProfile }
               : createEmptyLocationProfile()
             : undefined,
+        factionProfile:
+          entry.type === "faction"
+            ? entry.factionProfile
+              ? { ...entry.factionProfile }
+              : createEmptyFactionProfile()
+            : undefined,
       });
     } else {
       setForm(emptyForm(defaultType));
@@ -107,6 +115,9 @@ export function EntryEditor({
         : {}),
       ...(newType === "location" && !prev.locationProfile
         ? { locationProfile: createEmptyLocationProfile() }
+        : {}),
+      ...(newType === "faction" && !prev.factionProfile
+        ? { factionProfile: createEmptyFactionProfile() }
         : {}),
     }));
   };
@@ -143,6 +154,24 @@ export function EntryEditor({
       }
     }
 
+    if (
+      form.type === "faction" &&
+      mode === "edit" &&
+      entry &&
+      form.factionProfile?.parentFactionId
+    ) {
+      if (
+        wouldCreateFactionCycle(
+          projectEntries,
+          entry.id,
+          form.factionProfile.parentFactionId,
+        )
+      ) {
+        window.alert("无法设置该上级组织，因为这会形成循环层级关系。");
+        return;
+      }
+    }
+
     if (form.type === "character") {
       onSave({
         ...form,
@@ -152,6 +181,11 @@ export function EntryEditor({
       onSave({
         ...form,
         locationProfile: form.locationProfile ?? createEmptyLocationProfile(),
+      });
+    } else if (form.type === "faction") {
+      onSave({
+        ...form,
+        factionProfile: form.factionProfile ?? createEmptyFactionProfile(),
       });
     } else {
       onSave({

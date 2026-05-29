@@ -1,5 +1,6 @@
 import type { AppData, CharacterRelation, Entry, EntryType, Project } from "@/types";
 import { normalizeLocationProfile } from "@/lib/location-profile";
+import { normalizeFactionProfile } from "@/lib/faction-profile";
 import { normalizeTags } from "@/lib/entry-filters";
 import { migrateData, loadLegacyData, STORAGE_KEY, LEGACY_STORAGE_KEY, normalizeEntry, normalizeCharacterRelation } from "@/lib/migrate";
 import { generateId } from "@/lib/utils";
@@ -106,6 +107,7 @@ type EntryInput = Pick<
   | "relatedEntryIds"
   | "characterProfile"
   | "locationProfile"
+  | "factionProfile"
 >;
 
 function buildEntryFields(input: EntryInput) {
@@ -137,6 +139,13 @@ function buildEntryFields(input: EntryInput) {
     };
   }
 
+  if (input.type === "faction" && input.factionProfile) {
+    return {
+      ...fields,
+      factionProfile: normalizeFactionProfile(input.factionProfile),
+    };
+  }
+
   return fields;
 }
 
@@ -155,6 +164,9 @@ function clearStructuredReferences(
       if (e.type === "location" && e.locationProfile?.parentLocationId === entryId) {
         return { ...e, locationProfile: { ...e.locationProfile, parentLocationId: "" } };
       }
+      if (e.type === "faction" && e.factionProfile?.headquartersLocationId === entryId) {
+        return { ...e, factionProfile: { ...e.factionProfile, headquartersLocationId: "" } };
+      }
       return e;
     });
   }
@@ -166,6 +178,9 @@ function clearStructuredReferences(
       }
       if (e.type === "location" && e.locationProfile?.governingFactionId === entryId) {
         return { ...e, locationProfile: { ...e.locationProfile, governingFactionId: "" } };
+      }
+      if (e.type === "faction" && e.factionProfile?.parentFactionId === entryId) {
+        return { ...e, factionProfile: { ...e.factionProfile, parentFactionId: "" } };
       }
       return e;
     });
