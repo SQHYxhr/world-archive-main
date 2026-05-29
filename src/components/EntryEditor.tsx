@@ -28,6 +28,7 @@ import { RelatedEntryPicker } from "@/components/RelatedEntryPicker";
 import { CharacterEditor } from "@/components/CharacterEditor";
 import { LocationEditor } from "@/components/LocationEditor";
 import { FactionEditor } from "@/components/FactionEditor";
+import { ItemEditor } from "@/components/ItemEditor";
 import { Separator } from "@/components/ui/separator";
 
 interface EntryEditorProps {
@@ -231,7 +232,8 @@ export function EntryEditor({
   const isCharacter = form.type === "character";
   const isLocation = form.type === "location";
   const isFaction = form.type === "faction";
-  const isStructured = isCharacter || isLocation || isFaction;
+  const isItem = form.type === "item";
+  const isStructured = isCharacter || isLocation || isFaction || isItem;
 
   return (
     <>
@@ -247,14 +249,18 @@ export function EntryEditor({
                       ? "新建地点档案"
                       : isFaction
                         ? "新建组织档案"
-                        : "新建条目"
+                        : isItem
+                          ? "新建物品档案"
+                          : "新建条目"
                   : isCharacter
                     ? "编辑角色档案"
                     : isLocation
                       ? "编辑地点档案"
                       : isFaction
                         ? "编辑组织档案"
-                        : "编辑条目"}
+                        : isItem
+                          ? "编辑物品档案"
+                          : "编辑条目"}
               </h2>
               {isCharacter ? (
                 <p className="text-xs text-muted-foreground">结构化 OC / 人物设定</p>
@@ -262,6 +268,8 @@ export function EntryEditor({
                 <p className="text-xs text-muted-foreground">结构化地点设定</p>
               ) : isFaction ? (
                 <p className="text-xs text-muted-foreground">结构化组织 / 势力设定</p>
+              ) : isItem ? (
+                <p className="text-xs text-muted-foreground">结构化物品 / 道具设定</p>
               ) : null}
             </div>
             <div className="flex gap-2">
@@ -312,6 +320,13 @@ export function EntryEditor({
             />
           ) : isFaction ? (
             <FactionEditor
+              form={form}
+              setForm={setForm}
+              entry={entry}
+              projectEntries={projectEntries}
+            />
+          ) : isItem ? (
+            <ItemEditor
               form={form}
               setForm={setForm}
               entry={entry}
