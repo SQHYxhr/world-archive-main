@@ -139,6 +139,70 @@ export interface LocationProfile {
   creatorNotes: string;
 }
 
+// ── 组织 / 势力结构化档案 ──────────────────────────────────────
+
+export const FACTION_CATEGORIES = [
+  "government",
+  "military",
+  "guild",
+  "religious",
+  "academic",
+  "mercenary",
+  "secret",
+  "criminal",
+  "tribe",
+  "other",
+] as const;
+
+export type FactionCategory = "" | (typeof FACTION_CATEGORIES)[number];
+
+export const FACTION_CATEGORY_LABELS: Record<FactionCategory, string> = {
+  "": "未选择",
+  government: "政府 / 统治机构",
+  military: "军事组织",
+  guild: "公会 / 行会",
+  religious: "宗教 / 信仰组织",
+  academic: "学术 / 研究机构",
+  mercenary: "佣兵团",
+  secret: "秘密结社",
+  criminal: "犯罪组织",
+  tribe: "部落 / 氏族",
+  other: "其他",
+};
+
+export const FACTION_STATUSES = [
+  "active",
+  "declining",
+  "dissolved",
+  "underground",
+  "legendary",
+  "unknown",
+] as const;
+
+export type FactionStatus = "" | (typeof FACTION_STATUSES)[number];
+
+export const FACTION_STATUS_LABELS: Record<FactionStatus, string> = {
+  "": "未选择",
+  active: "活跃",
+  declining: "衰落中",
+  dissolved: "已解散",
+  underground: "转入地下",
+  legendary: "仅存于传说",
+  unknown: "未知",
+};
+
+export interface FactionProfile {
+  factionCategory: FactionCategory;
+  status: FactionStatus;
+  parentFactionId: string;
+  headquartersLocationId: string;
+  ideology: string;
+  structure: string;
+  influence: string;
+  history: string;
+  creatorNotes: string;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -167,6 +231,8 @@ export interface Entry {
   characterProfile?: CharacterProfile;
   /** 地点结构化档案；仅 type === "location" 时有效 */
   locationProfile?: LocationProfile;
+  /** 组织 / 势力结构化档案；仅 type === "faction" 时有效 */
+  factionProfile?: FactionProfile;
 }
 
 export interface AppData {
@@ -223,6 +289,7 @@ export type EntryFormData = Pick<
   | "relatedEntryIds"
   | "characterProfile"
   | "locationProfile"
+  | "factionProfile"
 >;
 
 export type ProjectFormData = Pick<Project, "name" | "description">;
