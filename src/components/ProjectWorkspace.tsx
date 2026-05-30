@@ -13,6 +13,7 @@ import { EntryList } from "@/components/EntryList";
 import { EntryDetail } from "@/components/EntryDetail";
 import { EntryEditor } from "@/components/EntryEditor";
 import { CharacterRelationDialog } from "@/components/CharacterRelationDialog";
+import { BackToTopButton } from "@/components/BackToTopButton";
 
 type PanelMode = "view" | "create" | "edit";
 
@@ -54,6 +55,7 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
   const searchParams = useSearchParams();
   const characterParam = searchParams.get("character");
   const processedParamRef = useRef<string | null>(null);
+  const mainContentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!hydrated || !characterParam || processedParamRef.current === characterParam) return;
@@ -335,6 +337,7 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
         </section>
 
         <aside
+          ref={mainContentRef}
           className={cn(
             "flex min-h-0 w-full lg:w-[460px] shrink-0 flex-col border-l border-border/80 bg-card/30",
             mobilePanel === "list" && "hidden",
@@ -409,6 +412,8 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
         existingRelations={data.characterRelations.filter((r) => r.projectId === projectId)}
         onSave={handleSaveRelation}
       />
+
+      <BackToTopButton scrollContainerRef={mainContentRef} />
     </div>
   );
 }

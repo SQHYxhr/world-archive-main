@@ -11,6 +11,7 @@ import { TopBar } from "@/components/TopBar";
 import { ProjectCard } from "@/components/ProjectCard";
 import { CreateProjectDialog } from "@/components/CreateProjectDialog";
 import { EmptyState } from "@/components/EmptyState";
+import { BackToTopButton } from "@/components/BackToTopButton";
 
 export default function HomePage() {
   const router = useRouter();
@@ -276,6 +277,8 @@ export default function HomePage() {
           </>
         )}
       </main>
+
+      <BackToTopButton />
     </div>
   );
 }
